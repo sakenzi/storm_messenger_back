@@ -1,11 +1,14 @@
 import hashlib
-
 from datetime import datetime, timedelta
 from typing import Optional
 from jose import jwt, JWTError
 from fastapi import HTTPException, Request
-
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+from model.models import User
 from core.config import settings
+from sqlalchemy.orm import selectinload
+
 
 def hash_password(plain_password: str) -> str:
     return hashlib.sha256(plain_password.encode('utf-8')).hexdigest()
@@ -47,3 +50,18 @@ async def validate_access_token(access_token: str) -> str:
         raise HTTPException(status_code=401, detail="Token has expired")
     
     return tg_username
+
+async def get_user_by_username(username: str, db: AsyncSession) -> User:
+    user = await db.execute(
+        select(User)
+        .filter(User.username==username)
+    )
+    return user.scalar_one_or_none()
+
+async def get_user_by_id(user_id: int, db: AsyncSession) -> User:
+    user = await db.execute(
+        select(User)
+        .options(selectinload(User.role))
+        .filter(User.id == user_id)
+    )
+    return user.scalars().first()
