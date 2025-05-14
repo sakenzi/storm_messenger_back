@@ -1,5 +1,5 @@
 from datetime import datetime
-from sqlalchemy import Column, DateTime, Integer, String, ForeignKey, Boolean, Text
+from sqlalchemy import Column, DateTime, Integer, String, ForeignKey, Boolean, Text, UniqueConstraint
 from sqlalchemy.orm import relationship
 from database.db import Base
 
@@ -19,7 +19,25 @@ class User(Base):
 
     chats = relationship("Chat",primaryjoin="or_(User.id==Chat.user1_id, User.id==Chat.user2_id)")
     messages = relationship("Message", back_populates="sender")
+    sent_requests = relationship("FriendRequest", foreign_keys='FriendRequest.from_user_id', back_populates="from_user")
+    received_requests = relationship("FriendRequest", foreign_keys='FriendRequest.to_user_id', back_populates="to_user")
 
+
+class FriendRequest(Base):
+    __tablename__ = "friend_requests"
+
+    id = Column(Integer, primary_key=True, index=True)
+    from_user_id = Column(Integer, ForeignKey('users.id'), nullable=False)
+    to_user_id = Column(Integer, ForeignKey('users.id'), nullable=False)
+    accepted = Column(Boolean, default=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    __table_args__ = (
+        UniqueConstraint('from_user_id', 'to_user_id', name='uq_friend_request'),
+    )
+
+    from_user = relationship("User", foreign_keys=[from_user_id], back_populates="sent_requests")
+    to_user = relationship("User", foreign_keys=[to_user_id], back_populates="received_requests")
 
 class Chat(Base):
     __tablename__ = "chats"
