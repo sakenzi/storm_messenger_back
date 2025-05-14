@@ -1,17 +1,14 @@
-from pydantic import BaseModel
-
-class UserBase(BaseModel):
-    username: str
-    password: str
+from pydantic import BaseModel, Field
+from typing import Optional
 
 
-class CreateClient(BaseModel):
-    code: str
-    ip_address: str
-    mac_address: str
-    username: str
-    device_info: str
-    desk_number: int
+class UserRegister(BaseModel):
+    username: Optional[str] = Field("", max_length=50)
+    full_name: str = Field(..., max_length=100)
+    password: str = Field(..., min_length=8)
 
-    class Config:
-        from_attributes = True
+
+class UserLogin(BaseModel):
+    username: str = Field(..., max_length=50)
+    password: str = Field(..., min_length=8)
+
