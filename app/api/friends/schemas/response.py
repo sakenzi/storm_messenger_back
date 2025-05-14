@@ -16,11 +16,11 @@ class FriendRequestResponse(BaseModel):
     created_at: datetime
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 class FriendRequestListResponse(BaseModel):
     count: int
     requests: list[FriendRequestResponse]
 
     class Config:
-        orm_mode = True
+        from_attributes = True
