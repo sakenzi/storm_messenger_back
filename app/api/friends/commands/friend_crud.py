@@ -1,9 +1,8 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from model.models import User, FriendRequest
-from fastapi import Request, HTTPException
-from utils.context_utils import get_access_token, validate_access_token
 from sqlalchemy.exc import IntegrityError
+from sqlalchemy.orm import selectinload
 
 
 async def send_friend_request(db: AsyncSession, from_user_id: int, to_user_id: int):
@@ -32,18 +31,11 @@ async def send_friend_request(db: AsyncSession, from_user_id: int, to_user_id: i
     return new_request
     
 
-# async def get_current_user_id(request: Request) -> int:
-#     try:
-#         access_token = await get_access_token(request)
-#     except Exception:
-#         raise HTTPException(status_code=401, detail="Access token missing on invalid")
-    
-#     try:
-#         user_id_str = await validate_access_token(access_token)
-#         user_id = int(user_id_str)
-#     except ValueError:
-#         raise HTTPException(status_code=400, detail="Invalid user_id format in token")
-#     except Exception:
-#         raise HTTPException(status_code=401, detail="Invalid Token")
-    
-#     return user_id
+async def get_sent_friend_requests(user_id: int, db: AsyncSession):
+    stmt = (
+        select(FriendRequest)
+        .where(FriendRequest.from_user_id == user_id, FriendRequest.accepted == False)
+        .options(selectinload(FriendRequest.to_user))
+    )
+    result = await db.execute(stmt)
+    return result.scalars().all()

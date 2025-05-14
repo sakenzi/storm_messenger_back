@@ -1,9 +1,11 @@
-from app.api.friends.commands.friend_crud import send_friend_request
+from app.api.friends.commands.friend_crud import send_friend_request, get_sent_friend_requests
 from app.api.friends.schemas.create import FriendRequest
 from fastapi import Depends, APIRouter, Request, HTTPException, status, Form
 from sqlalchemy.ext.asyncio import AsyncSession
 from utils.context_utils import get_access_token, validate_access_token
 from database.db import get_db
+from app.api.friends.schemas.response import FriendRequestListResponse, UserResponse
+from typing import Dict, List
 
 
 router = APIRouter()
@@ -39,3 +41,14 @@ async def send_friend(request: Request, to_user_id: int = Form(...), db: AsyncSe
     
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
+    
+@router.get(
+    "/user/friend-requests", 
+    response_model=List[UserResponse]
+)
+async def get_sent_requests(request: Request, db: AsyncSession = Depends(get_db)):
+    access_token = await get_access_token(request)
+    user_id = int(await validate_access_token(access_token))
+
+    friend_requests = await get_sent_friend_requests(user_id, db)
+    return [req.to_user for req in friend_requests]
