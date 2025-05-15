@@ -39,6 +39,7 @@ class FriendRequest(Base):
     from_user = relationship("User", foreign_keys=[from_user_id], back_populates="sent_requests")
     to_user = relationship("User", foreign_keys=[to_user_id], back_populates="received_requests")
 
+
 class Chat(Base):
     __tablename__ = "chats"
 
